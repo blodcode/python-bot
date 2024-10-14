@@ -128,6 +128,10 @@ def send_text(message):
                 # إضافة كود لإجراء عملية السحب هنا
                 bot.send_message(user_id, "تم طلب السحب بنجاح!")
 
+        elif message.text == '⚙️ Set Wallet':
+            bot.send_message(message.chat.id, "يرجى إدخال عنوان محفظتك:")
+            bot.register_next_step_handler(message, set_wallet)
+
         elif message.text == '📊 Statistics':
             if user_id == str(OWNER_ID):
                 total_users = data['total']
@@ -142,5 +146,19 @@ def send_text(message):
     except Exception as e:
         bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+
+def set_wallet(message):
+    user_id = str(message.chat.id)
+    wallet_address = message.text.strip()
+
+    # تحديث عنوان المحفظة في البيانات
+    data = json.load(open('users.json', 'r'))
+    if user_id in data['wallet']:
+        data['wallet'][user_id] = wallet_address
+    else:
+        data['wallet'][user_id] = wallet_address
+
+    json.dump(data, open('users.json', 'w'))
+    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
 
 bot.polling(none_stop=True)
