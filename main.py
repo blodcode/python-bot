@@ -8,6 +8,7 @@ BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
 OWNER_ID = 1002163515274  # أدخل معرف المشرف هنا
 CHANNELS = ["@tastttast"]  # إضافة القنوات التي سيتم التحقق منها هنا
+YOUTUBE_CHANNEL_URL = "https://www.youtube.com/c/YourChannelName"  # استبدل هذا برابط قناتك
 Daily_bonus = 2  # مقدار الهدية اليومية
 Mini_Withdraw = 1000  # الحد الأدنى للسحب
 Per_Refer = 3  # مكافأة الإحالة
@@ -52,6 +53,7 @@ def start(message):
         msg_start = "*🍔 To Use This Bot You Need To Join This Channel - \n"
         for channel in CHANNELS:
             msg_start += f"➡️ {channel}\n"
+        msg_start += f"➡️ و يجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
         msg_start += "*"
         bot.send_message(user_id, msg_start, parse_mode="Markdown", reply_markup=markup)
 
@@ -81,6 +83,7 @@ def query_handler(call):
                 msg_start = "*🍔 To Use This Bot You Need To Join This Channel - \n"
                 for channel in CHANNELS:
                     msg_start += f"➡️ {channel}\n"
+                msg_start += f"➡️ و يجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
                 msg_start += "*"
                 bot.send_message(call.message.chat.id, msg_start, parse_mode="Markdown", reply_markup=markup)
     except Exception as e:
