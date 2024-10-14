@@ -30,10 +30,6 @@ def menu(user_id):
     
     keyboard.row('🆔 احصائياتي')
     keyboard.row('🙌🏻 إحالات', '🎁 مكافأة', '💸 سحب')
-    
-    # زر إدخال الكود للمستخدمين العاديين
-    if user_id != str(OWNER_ID):  # إذا كان ليس مشرفًا
-        keyboard.row('🔑 إدخال الكود')
 
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
@@ -156,13 +152,6 @@ def send_text(message):
             if user_id == str(OWNER_ID):
                 bot.send_message(user_id, "يرجى إدخال عدد النقاط والمستخدمين المسموح لهم:")
                 bot.register_next_step_handler(message, create_code)
-            else:
-                bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
-
-        elif message.text == '🔑 إدخال الكود':
-            if user_id != str(OWNER_ID):  # إذا كان ليس مشرفًا
-                bot.send_message(user_id, "يرجى إدخال الكود:")
-                bot.register_next_step_handler(message, enter_code)
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
 
