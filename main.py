@@ -24,11 +24,16 @@ def check(id):
 
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
+
     if user_id == str(OWNER_ID):  # إذا كان المستخدم مشرف
         keyboard.row('🛠️ مكافات', '📊 إحصائياتي')  # إضافة زر المكافآت
+    
     keyboard.row('🆔 احصائياتي')
     keyboard.row('🙌🏻 إحالات', '🎁 مكافأة', '💸 سحب')
-    keyboard.row('⚙️ إعداد المحفظة')  # لا يظهر الإحصائيات للمستخدمين العاديين
+    
+    # زر إدخال الكود للمستخدمين العاديين
+    keyboard.row('🔑 إدخال الكود')
+
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -162,6 +167,19 @@ def send_text(message):
     except Exception as e:
         bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+
+def set_wallet(message):
+    user_id = str(message.chat.id)
+    wallet_address = message.text.strip()
+    data = json.load(open('users.json', 'r'))
+
+    if user_id in data['wallet']:
+        data['wallet'][user_id] = wallet_address
+    else:
+        data['wallet'] = {user_id: wallet_address}
+
+    json.dump(data, open('users.json', 'w'))
+    bot.send_message(user_id, f"تم إعداد محفظتك: {wallet_address}")
 
 def create_code(message):
     user_id = str(message.chat.id)
