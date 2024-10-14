@@ -4,6 +4,7 @@ import telebot
 import random
 
 ## TOKEN DETAILS
+TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
 OWNER_ID = 1002163515274  # أدخل معرف المشرف هنا
@@ -15,7 +16,6 @@ Per_Refer = 3  # مكافأة الإحالة
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# التحقق مما إذا كان المستخدم قد انضم إلى القنوات المطلوبة
 def check(id):
     for channel in CHANNELS:
         check = bot.get_chat_member(channel, id)
@@ -23,7 +23,6 @@ def check(id):
             return False
     return True
 
-# قائمة الخيارات الرئيسية
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('🆔 Account')
@@ -31,25 +30,11 @@ def menu(user_id):
     keyboard.row('⚙️ Set Wallet', '📊 Statistics')  # الإحصائيات للمشرف فقط
     bot.send_message(user_id, "*🏡 Home*", parse_mode="Markdown", reply_markup=keyboard)
 
-# بدء التفاعل مع المستخدم
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = str(message.chat.id)
     try:
-        # التأكد من وجود ملف users.json وتهيئته إذا لزم الأمر
-        try:
-            data = json.load(open('users.json', 'r'))
-        except FileNotFoundError:
-            data = {
-                "total": 0,
-                "referred": {},
-                "referby": {},
-                "checkin": {},
-                "balance": {},
-                "wallet": {},
-                "level": {},
-                "refer": {}
-            }
+        data = json.load(open('users.json', 'r'))
 
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
@@ -79,7 +64,6 @@ def start(message):
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
-# التعامل مع استجابة المستخدمين
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
     try:
@@ -109,7 +93,6 @@ def query_handler(call):
         bot.send_message(call.message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
-# معالجة النصوص المدخلة من المستخدمين
 @bot.message_handler(content_types=['text'])
 def send_text(message):
     user_id = str(message.chat.id)
@@ -183,8 +166,11 @@ def set_wallet(message):
 
     # تحديث عنوان المحفظة في البيانات
     data = json.load(open('users.json', 'r'))
-    data['wallet'][user_id] = wallet_address
-    json.dump(data, open('users.json', 'w'))
-    bot.send_message(message.chat.id, "تم تحديث عنوان المحفظة بنجاح!")
+    if user_id in data['wallet']:
+        data['wallet'][user_id] = wallet_address
+        json.dump(data, open('users.json', 'w'))
+        bot.send_message(message.chat.id, "تم تحديث عنوان المحفظة بنجاح!")
+    else:
+        bot.send_message(message.chat.id, "حدث خطأ أثناء تحديث عنوان المحفظة.")
 
 bot.polling(none_stop=True)
