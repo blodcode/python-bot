@@ -24,13 +24,11 @@ def check(id):
 
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
-
-    if user_id == str(OWNER_ID):  # إذا كان المستخدم مشرف
-        keyboard.row('🛠️ إنشاء كود', '📊 إحصائياتي')  # إضافة زر إنشاء الكود
-    
-    keyboard.row('🆔 احصائياتي')
-    keyboard.row('🙌🏻 إحالات', '🎁 مكافأة', '💸 سحب')
-
+    keyboard.row('احصائياتي')  # Changed to Egyptian Arabic
+    keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب')
+    keyboard.row('⚙️ إعداد المحفظة')  # Removed Statistics button for regular users
+    if user_id == OWNER_ID:  # Show statistics only for the admin
+        keyboard.row('📊 إحصائيات')
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -54,10 +52,10 @@ def start(message):
 
         markup = telebot.types.InlineKeyboardMarkup()
         markup.add(telebot.types.InlineKeyboardButton(text='🤼‍♂️ انضممت', callback_data='check'))
-        msg_start = "*🍔 لاستخدام هذا البوت، تحتاج إلى الانضمام إلى هذه القناة - \n"
+        msg_start = "*🍔 لاستخدام هذا البوت، يجب عليك الانضمام إلى هذه القناة - \n"
         for channel in CHANNELS:
             msg_start += f"➡️ {channel}\n"
-        msg_start += f"➡️ ويجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
+        msg_start += f"➡️ و يجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
         msg_start += "*"
         bot.send_message(user_id, msg_start, parse_mode="Markdown", reply_markup=markup)
 
@@ -73,7 +71,7 @@ def query_handler(call):
             if ch:
                 data = json.load(open('users.json', 'r'))
                 user_id = call.message.chat.id
-                bot.answer_callback_query(call.id, text='✅ لقد انضممت، الآن يمكنك كسب المال')
+                bot.answer_callback_query(call.id, text='✅ لقد انضممت، الآن يمكنك كسب النقاط')
                 bot.delete_message(call.message.chat.id, call.message.message_id)
                 if user_id not in data['refer']:
                     data['refer'][user_id] = True
@@ -84,10 +82,10 @@ def query_handler(call):
                 bot.delete_message(call.message.chat.id, call.message.message_id)
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.add(telebot.types.InlineKeyboardButton(text='🤼‍♂️ انضممت', callback_data='check'))
-                msg_start = "*🍔 لاستخدام هذا البوت، تحتاج إلى الانضمام إلى هذه القناة - \n"
+                msg_start = "*🍔 لاستخدام هذا البوت، يجب عليك الانضمام إلى هذه القناة - \n"
                 for channel in CHANNELS:
                     msg_start += f"➡️ {channel}\n"
-                msg_start += f"➡️ ويجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
+                msg_start += f"➡️ و يجب عليك الاشتراك في قناتي على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
                 msg_start += "*"
                 bot.send_message(call.message.chat.id, msg_start, parse_mode="Markdown", reply_markup=markup)
     except Exception as e:
@@ -100,15 +98,15 @@ def send_text(message):
     try:
         data = json.load(open('users.json', 'r'))
 
-        if message.text == '🆔 احصائياتي':
+        if message.text == 'احصائياتي':
             accmsg = '*👮 المستخدم : {}\n\n⚙️ المحفظة : *`{}`*\n\n💸 الرصيد : *`{}`* نقاط*'
             wallet = data.get('wallet', {}).get(user_id, "none")
             balance = data.get('balance', {}).get(user_id, 0)
             msg = accmsg.format(message.from_user.first_name, wallet, balance)
             bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
-        elif message.text == '🙌🏻 إحالات':
-            ref_msg = "*⏯️ إجمالي الدعوات : {} مستخدم\n\n👥 نظام الإحالات\n\n1 مستوى:\n🥇 المستوى°1 - {} نقاط\n\n🔗 رابط الإحالة ⬇️\n{}*"
+        elif message.text == '🙌🏻 الإحالات':
+            ref_msg = "*⏯️ إجمالي الدعوات : {} مستخدمين\n\n👥 نظام الإحالات\n\n1 مستوى:\n🥇 المستوى °1 - {} نقاط\n\n🔗 رابط الإحالة ⬇️\n{}*"
             bot_name = bot.get_me().username
             ref = data.get('referred', {}).get(user_id, 0)
             total_ref = data['total']
@@ -116,7 +114,7 @@ def send_text(message):
             refmsg = ref_msg.format(total_ref, ref, link)
             bot.send_message(message.chat.id, refmsg, parse_mode="Markdown")
 
-        elif message.text == '🎁 مكافأة':
+        elif message.text == '🎁 مكافآت':
             if user_id not in data['checkin']:
                 data['checkin'][user_id] = 0
             if data['checkin'][user_id] < 1:
@@ -127,7 +125,7 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "لقد حصلت على نقاطك اليومية بالفعل!")
 
-        elif message.text == '💸 سحب':
+        elif message.text == '💸 السحب':
             balance = data.get('balance', {}).get(user_id, 0)
             if balance < Mini_Withdraw:
                 bot.send_message(user_id, f"الحد الأدنى للسحب هو {Mini_Withdraw} نقاط")
@@ -139,7 +137,7 @@ def send_text(message):
             bot.send_message(message.chat.id, "يرجى إدخال عنوان محفظتك:")
             bot.register_next_step_handler(message, set_wallet)
 
-        elif message.text == '📊 إحصائياتي':
+        elif message.text == '📊 إحصائيات':
             if user_id == str(OWNER_ID):
                 total_users = data['total']
                 total_balance = sum(data['balance'].values())
@@ -148,16 +146,21 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
-        elif message.text == '🛠️ إنشاء كود':
-            if user_id == str(OWNER_ID):
-                bot.send_message(user_id, "يرجى إدخال عدد النقاط والمستخدمين المسموح لهم:")
-                bot.register_next_step_handler(message, create_code)
-            else:
-                bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
+        menu(message.chat.id)
 
     except Exception as e:
-        bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+        bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
-if __name__ == "__main__":
-    bot.polling(none_stop=True)
+def set_wallet(message):
+    user_id = str(message.chat.id)
+    wallet_address = message.text.strip()
+
+    # تحديث عنوان المحفظة في البيانات
+    data = json.load(open('users.json', 'r'))
+    data['wallet'][user_id] = wallet_address
+
+    json.dump(data, open('users.json', 'w'))
+    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
+
+bot.polling(none_stop=True)
