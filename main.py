@@ -26,13 +26,14 @@ def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
 
     if user_id == str(OWNER_ID):  # إذا كان المستخدم مشرف
-        keyboard.row('🛠️ مكافات', '📊 إحصائياتي')  # إضافة زر المكافآت
+        keyboard.row('🛠️ إنشاء كود', '📊 إحصائياتي')  # إضافة زر إنشاء الكود
     
     keyboard.row('🆔 احصائياتي')
     keyboard.row('🙌🏻 إحالات', '🎁 مكافأة', '💸 سحب')
     
     # زر إدخال الكود للمستخدمين العاديين
-    keyboard.row('🔑 إدخال الكود')
+    if user_id != str(OWNER_ID):  # إذا كان ليس مشرفًا
+        keyboard.row('🔑 إدخال الكود')
 
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
@@ -151,7 +152,7 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
-        elif message.text == '🛠️ مكافات':
+        elif message.text == '🛠️ إنشاء كود':
             if user_id == str(OWNER_ID):
                 bot.send_message(user_id, "يرجى إدخال عدد النقاط والمستخدمين المسموح لهم:")
                 bot.register_next_step_handler(message, create_code)
@@ -159,13 +160,14 @@ def send_text(message):
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
 
         elif message.text == '🔑 إدخال الكود':
-            bot.send_message(user_id, "يرجى إدخال الكود:")
-            bot.register_next_step_handler(message, enter_code)
-
-        menu(message.chat.id)
+            if user_id != str(OWNER_ID):  # إذا كان ليس مشرفًا
+                bot.send_message(user_id, "يرجى إدخال الكود:")
+                bot.register_next_step_handler(message, enter_code)
+            else:
+                bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
 
     except Exception as e:
-        bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+        bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 def set_wallet(message):
