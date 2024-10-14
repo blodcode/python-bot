@@ -48,7 +48,7 @@ def start(message):
         if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
         if user_id not in data['tasks_completed']:
-            data['tasks_completed'][user_id] = 0
+            data['tasks_completed'][user_id] = 0  # تم تحديثه
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -158,12 +158,10 @@ def send_text(message):
                 bot.send_message(user_id, "يرجى إدخال اسم المهمة:")
                 bot.register_next_step_handler(message, add_task_name)
             else:
-                bot.send_message(user_id, "ليس لديك إذن للوصول إلى هذه الميزة!")
-
-        menu(message.chat.id)
+                bot.send_message(user_id, "ليس لديك إذن لإضافة مهام!")
 
     except Exception as e:
-        bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+        bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 def set_wallet(message):
@@ -195,6 +193,21 @@ def add_task_points(message, task_name):
         bot.send_message(user_id, "تم إضافة المهمة بنجاح!")
     except Exception as e:
         bot.send_message(user_id, "حدث خطأ أثناء إضافة المهمة.")
+        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+
+def complete_task(user_id, task_id):
+    try:
+        data = json.load(open('users.json', 'r'))
+        if task_id in data['tasks']:
+            task_points = data['tasks'][task_id]['points']
+            data['balance'][user_id] += task_points
+            data['tasks_completed'][user_id] += 1  # تحديث عدد المهام المكتملة
+            json.dump(data, open('users.json', 'w'))
+            bot.send_message(user_id, f"تم إكمال المهمة بنجاح! لقد حصلت على {task_points} نقاط.")
+        else:
+            bot.send_message(user_id, "المهمة غير موجودة.")
+    except Exception as e:
+        bot.send_message(user_id, "حدث خطأ أثناء إكمال المهمة.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 bot.polling()
