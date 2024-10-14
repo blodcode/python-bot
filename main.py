@@ -1,7 +1,6 @@
 import time
 import json
 import telebot
-import random
 
 ## TOKEN DETAILS
 TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
@@ -26,7 +25,7 @@ def check(id):
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('🆔 Account')
-    keyboard.row('🙌🏻 Referrals', '🎁 Bonus', '💸 Withdraw', '🎮 Game')
+    keyboard.row('🙌🏻 Referrals', '🎁 Bonus', '💸 Withdraw')
     keyboard.row('⚙️ Set Wallet', '📊 Statistics')  # الإحصائيات للمشرف فقط
     bot.send_message(user_id, "*🏡 Home*", parse_mode="Markdown", reply_markup=keyboard)
 
@@ -47,8 +46,6 @@ def start(message):
             data['balance'][user_id] = 0
         if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
-        if user_id not in data['level']:
-            data['level'][user_id] = 1  # بدء مستوى 1
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -100,11 +97,10 @@ def send_text(message):
         data = json.load(open('users.json', 'r'))
 
         if message.text == '🆔 Account':
-            accmsg = '*👮 User : {}\n\n⚙️ Wallet : *`{}`*\n\n💸 Balance : *`{}`* نقاط\n\n🔖 Level : *`{}`*'
+            accmsg = '*👮 User : {}\n\n⚙️ Wallet : *`{}`*\n\n💸 Balance : *`{}`* نقاط*'
             wallet = data.get('wallet', {}).get(user_id, "none")
             balance = data.get('balance', {}).get(user_id, 0)
-            level = data.get('level', {}).get(user_id, 1)
-            msg = accmsg.format(message.from_user.first_name, wallet, balance, level)
+            msg = accmsg.format(message.from_user.first_name, wallet, balance)
             bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
         elif message.text == '🙌🏻 Referrals':
@@ -148,12 +144,6 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
-        elif message.text == '🎮 Game':
-            game_points = random.randint(1, 10)  # عدد النقاط التي يمكن كسبها في اللعبة
-            data['balance'][user_id] += game_points
-            json.dump(data, open('users.json', 'w'))
-            bot.send_message(user_id, f"🎉 لقد فزت بـ {game_points} نقاط في اللعبة!")
-
         menu(message.chat.id)
 
     except Exception as e:
@@ -168,9 +158,10 @@ def set_wallet(message):
     data = json.load(open('users.json', 'r'))
     if user_id in data['wallet']:
         data['wallet'][user_id] = wallet_address
-        json.dump(data, open('users.json', 'w'))
-        bot.send_message(message.chat.id, "تم تحديث عنوان المحفظة بنجاح!")
     else:
-        bot.send_message(message.chat.id, "حدث خطأ أثناء تحديث عنوان المحفظة.")
+        data['wallet'][user_id] = wallet_address
+
+    json.dump(data, open('users.json', 'w'))
+    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
 
 bot.polling(none_stop=True)
