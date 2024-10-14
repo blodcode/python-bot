@@ -17,58 +17,37 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 def check(id):
     for channel in CHANNELS:
-        try:
-            check = bot.get_chat_member(channel, id)
-            if check.status == 'left':
-                return False
-        except Exception as e:
-            bot.send_message(OWNER_ID, f"خطأ في التحقق من القناة: {channel}, الخطأ: {str(e)}")
+        check = bot.get_chat_member(channel, id)
+        if check.status == 'left':
             return False
     return True
 
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('احصائياتي')  # Changed to Egyptian Arabic
-    keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب', '⚙️ إعداد المحفظة', 'مهام')
+    keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب')
+    keyboard.row('⚙️ إعداد المحفظة')  # Removed Statistics button for regular users
     if user_id == OWNER_ID:  # Show statistics only for the admin
-        keyboard.row('📊 إحصائيات', '📝 إضافة مهام')
+        keyboard.row('📊 إحصائيات')
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = str(message.chat.id)
     try:
-        # تأكد من وجود ملف المستخدمين
-        try:
-            data = json.load(open('users.json', 'r'))
-        except FileNotFoundError:
-            # إنشاء ملف إذا لم يكن موجوداً
-            data = {
-                'referred': {},
-                'total': 0,
-                'referby': {},
-                'checkin': {},
-                'balance': {},
-                'wallet': {},
-                'tasks_completed': {}
-            }
-            json.dump(data, open('users.json', 'w'))
+        data = json.load(open('users.json', 'r'))
 
-        # التأكد من وجود المستخدم في البيانات
-        if user_id not in data.get('referred', {}):
+        if user_id not in data['referred']:
             data['referred'][user_id] = 0
             data['total'] += 1
-        if user_id not in data.get('referby', {}):
+        if user_id not in data['referby']:
             data['referby'][user_id] = user_id
-        if user_id not in data.get('checkin', {}):
+        if user_id not in data['checkin']:
             data['checkin'][user_id] = 0
-        if user_id not in data.get('balance', {}):
+        if user_id not in data['balance']:
             data['balance'][user_id] = 0
-        if user_id not in data.get('wallet', {}):
+        if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
-        if user_id not in data.get('tasks_completed', {}):
-            data['tasks_completed'][user_id] = 0  # تم تحديثه
-
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -162,36 +141,26 @@ def send_text(message):
             if user_id == str(OWNER_ID):
                 total_users = data['total']
                 total_balance = sum(data['balance'].values())
-                stats_msg = f"إجمالي المستخدمين: {total_users}\nإجمالي النقاط: {total_balance}"
-                bot.send_message(user_id, stats_msg)
+                stat_msg = f"🧑‍🤝‍🧑 إجمالي المستخدمين: {total_users}\n💰 إجمالي الرصيد: {total_balance} نقاط"
+                bot.send_message(user_id, stat_msg)
             else:
-                bot.send_message(user_id, "ليس لديك صلاحية للوصول إلى هذه الميزة.")
+                bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
-        elif message.text == '📝 إضافة مهام':
-            if user_id == str(OWNER_ID):
-                bot.send_message(user_id, "يرجى إدخال تفاصيل المهمة:")
-                bot.register_next_step_handler(message, add_task)
-            else:
-                bot.send_message(user_id, "ليس لديك صلاحية للوصول إلى هذه الميزة.")
-                
-        elif message.text == 'مهام':
-            bot.send_message(user_id, "هنا قائمة المهام المتاحة:")
+        menu(message.chat.id)
 
     except Exception as e:
-        bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+        bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 def set_wallet(message):
     user_id = str(message.chat.id)
-    wallet_address = message.text
+    wallet_address = message.text.strip()
+
+    # تحديث عنوان المحفظة في البيانات
     data = json.load(open('users.json', 'r'))
     data['wallet'][user_id] = wallet_address
+
     json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, "تم تحديث عنوان محفظتك بنجاح!")
+    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
 
-def add_task(message):
-    user_id = str(message.chat.id)
-    task_details = message.text
-    # هنا يمكن إضافة الكود الخاص بإضافة المهمة للمستخدمين
-
-bot.polling()
+bot.polling(none_stop=True)
