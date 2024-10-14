@@ -1,12 +1,13 @@
 import time
 import json
 import telebot
+import random
 
 ## TOKEN DETAILS
 TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
-OWNER_ID = 6932047318  # أدخل معرف المشرف هنا
+OWNER_ID = 1002163515274  # أدخل معرف المشرف هنا
 CHANNELS = ["@tastttast"]  # إضافة القنوات التي سيتم التحقق منها هنا
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/c/YourChannelName"  # استبدل هذا برابط قناتك
 Daily_bonus = 2  # مقدار الهدية اليومية
@@ -27,6 +28,7 @@ def menu(user_id):
     keyboard.row('🆔 Account')
     keyboard.row('🙌🏻 Referrals', '🎁 Bonus', '💸 Withdraw')
     keyboard.row('⚙️ Set Wallet', '📊 Statistics')  # الإحصائيات للمشرف فقط
+    keyboard.row('🎮 Play Games')  # إضافة خيار الألعاب
     bot.send_message(user_id, "*🏡 Home*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -144,24 +146,90 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
+        elif message.text == '🎮 Play Games':
+            games_menu(user_id)
+
         menu(message.chat.id)
 
     except Exception as e:
         bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
+def games_menu(user_id):
+    keyboard = telebot.types.ReplyKeyboardMarkup(True)
+    keyboard.row('🎲 Guess the Number', '🔢 Count to 10', '🔙 Back')
+    bot.send_message(user_id, "*🎮 Choose a Game:*", parse_mode="Markdown", reply_markup=keyboard)
+
+@bot.message_handler(content_types=['text'])
+def handle_game_selection(message):
+    user_id = str(message.chat.id)
+
+    if message.text == '🎲 Guess the Number':
+        start_guessing_game(user_id)
+
+    elif message.text == '🔢 Count to 10':
+        start_counting_game(user_id)
+
+    elif message.text == '🔙 Back':
+        menu(user_id)
+
+def start_guessing_game(user_id):
+    number_to_guess = random.randint(1, 10)
+    bot.send_message(user_id, "تخمين الرقم من 1 إلى 10. لديك 3 محاولات. ابدأ بالتخمين!")
+    bot.register_next_step_handler_by_chat_id(user_id, lambda msg: guess_number(msg, number_to_guess, 3))
+
+def guess_number(message, number_to_guess, attempts):
+    user_id = str(message.chat.id)
+
+    if attempts > 0:
+        if message.text.isdigit() and int(message.text) == number_to_guess:
+            bot.send_message(user_id, "🎉 أحسنت! لقد خمّنت الرقم الصحيح!")
+            menu(user_id)
+        else:
+            attempts -= 1
+            bot.send_message(user_id, f"😢 خاطئ! لديك {attempts} محاولة/محاولات متبقية.")
+            bot.register_next_step_handler(message, lambda msg: guess_number(msg, number_to_guess, attempts))
+    else:
+        bot.send_message(user_id, f"💔 لقد انتهت محاولاتك! الرقم كان: {number_to_guess}.")
+        menu(user_id)
+
+def start_counting_game(user_id):
+    bot.send_message(user_id, "🔢 ابدأ العد حتى 10. اكتب الرقم التالي!")
+    bot.register_next_step_handler_by_chat_id(user_id, count_to_ten)
+
+def count_to_ten(message):
+    user_id = str(message.chat.id)
+
+    if message.text.isdigit() and int(message.text) == 1:
+        bot.send_message(user_id, "2")
+        bot.register_next_step_handler_by_chat_id(user_id, lambda msg: count_to_ten_helper(msg, 3))
+    else:
+        bot.send_message(user_id, "😢 يجب أن تبدأ العد من 1.")
+        menu(user_id)
+
+def count_to_ten_helper(message, next_number):
+    user_id = str(message.chat.id)
+
+    if next_number <= 10:
+        if message.text.isdigit() and int(message.text) == next_number:
+            bot.send_message(user_id, str(next_number + 1))
+            bot.register_next_step_handler(message, lambda msg: count_to_ten_helper(msg, next_number + 1))
+        else:
+            bot.send_message(user_id, f"😢 خاطئ! الرقم التالي كان: {next_number}.")
+            menu(user_id)
+    else:
+        bot.send_message(user_id, "🎉 أحسنت! لقد أكملت العد حتى 10.")
+        menu(user_id)
+
 def set_wallet(message):
     user_id = str(message.chat.id)
-    wallet_address = message.text.strip()
+    wallet_address = message.text
 
-    # تحديث عنوان المحفظة في البيانات
     data = json.load(open('users.json', 'r'))
-    if user_id in data['wallet']:
-        data['wallet'][user_id] = wallet_address
-    else:
-        data['wallet'][user_id] = wallet_address
-
+    data['wallet'][user_id] = wallet_address
     json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
+
+    bot.send_message(user_id, f"تم تعيين محفظتك: {wallet_address}")
+    menu(user_id)
 
 bot.polling(none_stop=True)
