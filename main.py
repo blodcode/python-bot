@@ -6,7 +6,7 @@ import telebot
 TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
-OWNER_ID = 1002163515274  # أدخل معرف المشرف هنا
+OWNER_ID = 6932047318  # أدخل معرف المشرف هنا
 CHANNELS = ["@tastttast"]  # إضافة القنوات التي سيتم التحقق منها هنا
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/c/YourChannelName"  # استبدل هذا برابط قناتك
 Daily_bonus = 2  # مقدار الهدية اليومية
