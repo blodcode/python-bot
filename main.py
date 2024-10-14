@@ -170,53 +170,5 @@ def send_text(message):
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
-def set_wallet(message):
-    user_id = str(message.chat.id)
-    wallet_address = message.text.strip()
-    data = json.load(open('users.json', 'r'))
-
-    if user_id in data['wallet']:
-        data['wallet'][user_id] = wallet_address
-    else:
-        data['wallet'] = {user_id: wallet_address}
-
-    json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, f"تم إعداد محفظتك: {wallet_address}")
-
-def create_code(message):
-    user_id = str(message.chat.id)
-    try:
-        points, user_limit = map(int, message.text.split())
-        code = f"CODE{int(time.time())}"  # كود فريد يعتمد على الوقت
-        data = json.load(open('users.json', 'r'))
-
-        if 'codes' not in data:
-            data['codes'] = {}
-        
-        data['codes'][code] = {'points': points, 'user_limit': user_limit, 'used': 0}
-        json.dump(data, open('users.json', 'w'))
-
-        bot.send_message(user_id, f"تم إنشاء الكود بنجاح: {code}\nالمستخدمين المسموح لهم: {user_limit}\nالنقاط الممنوحة: {points}")
-    except Exception as e:
-        bot.send_message(user_id, "يرجى إدخال عدد النقاط والمستخدمين المسموح لهم بشكل صحيح (مثال: 10 5).")
-        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
-
-def enter_code(message):
-    user_id = str(message.chat.id)
-    code = message.text.strip()
-    data = json.load(open('users.json', 'r'))
-
-    if 'codes' in data and code in data['codes']:
-        code_data = data['codes'][code]
-        if code_data['used'] < code_data['user_limit']:
-            data['balance'][user_id] += code_data['points']
-            code_data['used'] += 1
-            json.dump(data, open('users.json', 'w'))
-            bot.send_message(user_id, f"تم استخدام الكود بنجاح! حصلت على {code_data['points']} نقاط.")
-        else:
-            bot.send_message(user_id, "آسف، تم استخدام هذا الكود للحد الأقصى من المستخدمين.")
-    else:
-        bot.send_message(user_id, "الكود غير صحيح أو غير موجود.")
-
 if __name__ == "__main__":
     bot.polling(none_stop=True)
