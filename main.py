@@ -2,7 +2,7 @@ import time
 import json
 import telebot
 
-# TOKEN DETAILS
+## TOKEN DETAILS
 TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
@@ -25,7 +25,7 @@ def check(id):
 def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('احصائياتي')  # Changed to Egyptian Arabic
-    keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب')
+    keyboard.row('🙌🏻 الإحالات', '💸 السحب')
     keyboard.row('⚙️ إعداد المحفظة')  # Removed Statistics button for regular users
     if user_id == OWNER_ID:  # Show statistics only for the admin
         keyboard.row('📊 إحصائيات')
@@ -37,7 +37,6 @@ def start(message):
     try:
         data = json.load(open('users.json', 'r'))
 
-        # Initialize user data if not present
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
             data['total'] += 1
@@ -49,10 +48,6 @@ def start(message):
             data['balance'][user_id] = 0
         if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
-        if 'tasks_completed' not in data:  # Ensure tasks_completed exists
-            data['tasks_completed'] = {}
-        if user_id not in data['tasks_completed']:
-            data['tasks_completed'][user_id] = 0
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -119,17 +114,6 @@ def send_text(message):
             refmsg = ref_msg.format(total_ref, ref, link)
             bot.send_message(message.chat.id, refmsg, parse_mode="Markdown")
 
-        elif message.text == '🎁 مكافآت':
-            if user_id not in data['checkin']:
-                data['checkin'][user_id] = 0
-            if data['checkin'][user_id] < 1:
-                data['balance'][user_id] += Daily_bonus
-                data['checkin'][user_id] += 1
-                json.dump(data, open('users.json', 'w'))
-                bot.send_message(user_id, f"تم إضافة نقاطك اليومية: {Daily_bonus} نقاط")
-            else:
-                bot.send_message(user_id, "لقد حصلت على نقاطك اليومية بالفعل!")
-
         elif message.text == '💸 السحب':
             balance = data.get('balance', {}).get(user_id, 0)
             if balance < Mini_Withdraw:
@@ -166,6 +150,6 @@ def set_wallet(message):
     data['wallet'][user_id] = wallet_address
 
     json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, f"تم تحديث عنوان محفظتك إلى: {wallet_address}")
+    bot.send_message(user_id, f"تم تعيين عنوان المحفظة إلى: {wallet_address}")
 
-bot.polling()
+bot.polling(none_stop=True)
