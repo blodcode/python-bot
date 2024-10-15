@@ -38,6 +38,7 @@ def start(message):
     try:
         data = json.load(open('users.json', 'r'))
 
+        # Ensure that all necessary fields are initialized for new users
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
             data['total'] += 1
@@ -110,12 +111,15 @@ def send_text(message):
             bot.send_message(user_id, "هذه هي المهام المتاحة!")
 
         elif message.text == '🎁 المكافآت':
+            # Ensure user exists in 'checkin'
             if user_id not in data['checkin']:
                 data['checkin'][user_id] = 0
+                json.dump(data, open('users.json', 'w'))  # Save changes if any
+            
             if data['checkin'][user_id] < 1:
                 data['balance'][user_id] += Daily_bonus
                 data['checkin'][user_id] += 1
-                json.dump(data, open('users.json', 'w'))
+                json.dump(data, open('users.json', 'w'))  # Save changes
                 bot.send_message(user_id, f"تم إضافة نقاطك اليومية: {Daily_bonus} نقاط")
             else:
                 bot.send_message(user_id, "لقد حصلت على نقاطك اليومية بالفعل!")
