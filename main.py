@@ -29,6 +29,8 @@ def menu(user_id):
     keyboard.row('⚙️ إعداد المحفظة')  # Removed Statistics button for regular users
     if user_id == OWNER_ID:  # Show statistics only for the admin
         keyboard.row('📊 إحصائيات')
+    else:
+        keyboard.row('🎁 مكافآت')  # Keep this button for regular users
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -113,6 +115,17 @@ def send_text(message):
             link = f"https://t.me/{bot_name}?start={user_id}"
             refmsg = ref_msg.format(total_ref, ref, link)
             bot.send_message(message.chat.id, refmsg, parse_mode="Markdown")
+
+        elif message.text == '🎁 مكافآت':
+            if user_id not in data['checkin']:
+                data['checkin'][user_id] = 0
+            if data['checkin'][user_id] < 1:
+                data['balance'][user_id] += Daily_bonus
+                data['checkin'][user_id] += 1
+                json.dump(data, open('users.json', 'w'))
+                bot.send_message(user_id, f"تم إضافة نقاطك اليومية: {Daily_bonus} نقاط")
+            else:
+                bot.send_message(user_id, "لقد حصلت على نقاطك اليومية بالفعل!")
 
         elif message.text == '💸 السحب':
             balance = data.get('balance', {}).get(user_id, 0)
