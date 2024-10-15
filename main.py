@@ -2,7 +2,7 @@ import time
 import json
 import telebot
 
-## TOKEN DETAILS
+# TOKEN DETAILS
 TOKEN = "TON"
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"
@@ -36,12 +36,15 @@ def menu(user_id):
 def start(message):
     user_id = str(message.chat.id)
     try:
-        data = json.load(open('users.json', 'r'))
-
-        # Ensure that all necessary fields are initialized for new users
+        # فتح ملف المستخدمين أو إنشاء ملف جديد إذا لم يكن موجودًا
+        try:
+            data = json.load(open('users.json', 'r'))
+        except FileNotFoundError:
+            data = {'referred': {}, 'referby': {}, 'checkin': {}, 'balance': {}, 'wallet': {}, 'tasks_completed': {}, 'total': 0}
+        
+        # تأكد من أن المستخدم الجديد لديه كافة الحقول المطلوبة
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
-            data['total'] += 1
         if user_id not in data['referby']:
             data['referby'][user_id] = user_id
         if user_id not in data['checkin']:
@@ -52,7 +55,12 @@ def start(message):
             data['wallet'][user_id] = "none"
         if user_id not in data['tasks_completed']:
             data['tasks_completed'][user_id] = 0
-
+        
+        # زيادة عدد المستخدمين إذا كان المستخدم جديدًا
+        if user_id not in data['referred']:
+            data['total'] += 1
+        
+        # حفظ التعديلات في الملف
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -65,22 +73,19 @@ def start(message):
 
     except Exception as e:
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
     try:
-        ch = check(call.message.chat.id)
+        user_id = call.message.chat.id
+        ch = check(user_id)
         if call.data == 'check':
             if ch:
                 data = json.load(open('users.json', 'r'))
-                user_id = call.message.chat.id
                 bot.answer_callback_query(call.id, text='✅ انضممت بنجاح!')
                 bot.delete_message(call.message.chat.id, call.message.message_id)
-                if user_id not in data['refer']:
-                    data['refer'][user_id] = True
-                    json.dump(data, open('users.json', 'w'))
-                    menu(call.message.chat.id)
+                menu(user_id)
             else:
                 bot.answer_callback_query(call.id, text='❌ لم تنضم بعد!')
                 markup = telebot.types.InlineKeyboardMarkup()
@@ -89,10 +94,10 @@ def query_handler(call):
                 for channel in CHANNELS:
                     msg_start += f"➡️ {channel}\n"
                 msg_start += f"➡️ اشترك في قناتنا على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
-                bot.send_message(call.message.chat.id, msg_start, parse_mode="Markdown", reply_markup=markup)
+                bot.send_message(user_id, msg_start, parse_mode="Markdown", reply_markup=markup)
     except Exception as e:
-        bot.send_message(call.message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+        bot.send_message(user_id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
+        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
@@ -105,21 +110,20 @@ def send_text(message):
             wallet = data.get('wallet', {}).get(user_id, "none")
             balance = data.get('balance', {}).get(user_id, 0)
             msg = accmsg.format(message.from_user.first_name, wallet, balance)
-            bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+            bot.send_message(user_id, msg, parse_mode="Markdown")
 
         elif message.text == '💼 المهام':
             bot.send_message(user_id, "هذه هي المهام المتاحة!")
 
         elif message.text == '🎁 المكافآت':
-            # Ensure user exists in 'checkin'
             if user_id not in data['checkin']:
                 data['checkin'][user_id] = 0
-                json.dump(data, open('users.json', 'w'))  # Save changes if any
+                json.dump(data, open('users.json', 'w'))  # حفظ التعديلات إذا كان هناك أي تغييرات
             
             if data['checkin'][user_id] < 1:
                 data['balance'][user_id] += Daily_bonus
                 data['checkin'][user_id] += 1
-                json.dump(data, open('users.json', 'w'))  # Save changes
+                json.dump(data, open('users.json', 'w'))  # حفظ التعديلات
                 bot.send_message(user_id, f"تم إضافة نقاطك اليومية: {Daily_bonus} نقاط")
             else:
                 bot.send_message(user_id, "لقد حصلت على نقاطك اليومية بالفعل!")
@@ -152,7 +156,7 @@ def send_text(message):
 
     except Exception as e:
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
+        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
 
 def set_wallet(message):
     user_id = str(message.chat.id)
@@ -162,7 +166,7 @@ def set_wallet(message):
     bot.send_message(user_id, "تم تعيين المحفظة بنجاح!")
 
 def add_task(message):
-    # Task-adding logic goes here
+    # منطق إضافة المهمة هنا
     bot.send_message(message.chat.id, "تم إضافة المهمة بنجاح!")
 
-bot.polling(none_stop=True)
+bot.polling()
