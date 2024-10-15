@@ -2,12 +2,12 @@ import time
 import json
 import telebot
 
-## TOKEN DETAILS
-TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
-BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
-PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
+# TOKEN DETAILS
+TOKEN = "YOUR_TOKEN"  # استبدل هذا بالتوكن الصحيح
+BOT_TOKEN = "YOUR_BOT_TOKEN"  # استبدل هذا بالتوكن الصحيح
+PAYMENT_CHANNEL = "@your_channel"  # إضافة القناة هنا بما في ذلك علامة '@'
 OWNER_ID = 6932047318  # أدخل معرف المشرف هنا
-CHANNELS = ["@tastttast"]  # إضافة القنوات التي سيتم التحقق منها هنا
+CHANNELS = ["@your_channel"]  # إضافة القنوات التي سيتم التحقق منها هنا
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/c/YourChannelName"  # استبدل هذا برابط قناتك
 Daily_bonus = 2  # مقدار الهدية اليومية
 Mini_Withdraw = 1000  # الحد الأدنى للسحب
@@ -27,8 +27,10 @@ def menu(user_id):
     keyboard.row('احصائياتي')  # Changed to Egyptian Arabic
     keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب')
     keyboard.row('⚙️ إعداد المحفظة')
-    if user_id == OWNER_ID:  # Show statistics only for the admin
-        keyboard.row('📊 إحصائيات', '📝 المهام')  # Button for tasks
+    keyboard.row('📝 المهام')  # Button for users to see tasks
+    if user_id == OWNER_ID:  # Show add tasks only for admin
+        keyboard.row('📝 إضافة مهام')  # Added button for admin to add tasks
+        keyboard.row('📊 إحصائيات')  # Statistics button only for admin
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -37,12 +39,10 @@ def start(message):
     try:
         data = json.load(open('users.json', 'r'))
 
-        # تحقق من وجود مفتاح 'tasks_completed' وإضافته إذا لم يكن موجودًا
-        if 'tasks_completed' not in data:
-            data['tasks_completed'] = {}
-
+        if 'tasks_completed' not in data:  # Check if tasks_completed exists
+            data['tasks_completed'] = {}  # Initialize it if it doesn't
         if user_id not in data['tasks_completed']:
-            data['tasks_completed'][user_id] = 0  # أو أي قيمة افتراضية
+            data['tasks_completed'][user_id] = 0
 
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
@@ -68,7 +68,7 @@ def start(message):
 
     except Exception as e:
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
-        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e) + "\nتفاصيل الخطأ:\n" + str(e))
+        bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
@@ -144,6 +144,14 @@ def send_text(message):
             bot.send_message(message.chat.id, "يرجى إدخال عنوان محفظتك:")
             bot.register_next_step_handler(message, set_wallet)
 
+        elif message.text == '📝 إضافة مهام':
+            if user_id == str(OWNER_ID):  # Check if user is admin
+                bot.send_message(message.chat.id, "يرجى إدخال تفاصيل المهمة:")
+                bot.register_next_step_handler(message, add_task)
+
+        elif message.text == '📝 المهام':
+            bot.send_message(message.chat.id, "هنا يمكنك رؤية المهام.")
+
         elif message.text == '📊 إحصائيات':
             if user_id == str(OWNER_ID):
                 total_users = data['total']
@@ -153,27 +161,25 @@ def send_text(message):
             else:
                 bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
 
-        elif message.text == '📝 المهام':
-            # هنا يمكنك إضافة منطق المهام
-            bot.send_message(user_id, "المهام متاحة قريبا!")
-
         menu(message.chat.id)
 
     except Exception as e:
         bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+       
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 def set_wallet(message):
     user_id = str(message.chat.id)
-    wallet_address = message.text.strip()
-
-    # تحديث عنوان المحفظة في البيانات
+    wallet_address = message.text
     data = json.load(open('users.json', 'r'))
     data['wallet'][user_id] = wallet_address
     json.dump(data, open('users.json', 'w'))
-    
-    bot.send_message(user_id, f"تم تحديث عنوان المحفظة الخاص بك إلى: {wallet_address}")
-    menu(user_id)
+    bot.send_message(user_id, f"تم إعداد محفظتك: {wallet_address}")
 
-# ابدأ البوت
-bot.polling()
+def add_task(message):
+    task_details = message.text
+    # هنا يمكنك إضافة كود لتخزين المهمة
+    bot.send_message(message.chat.id, f"تم إضافة المهمة: {task_details}")
+
+# بدء البوت
+bot.polling(none_stop=True)
