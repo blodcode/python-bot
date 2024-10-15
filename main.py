@@ -2,7 +2,7 @@ import time
 import json
 import telebot
 
-## TOKEN DETAILS
+# TOKEN DETAILS
 TOKEN = "TON"  # يجب استبدال هذا بالتوكن الصحيح
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"  # إضافة القناة هنا بما في ذلك علامة '@'
@@ -26,12 +26,9 @@ def menu(user_id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('احصائياتي')  # Changed to Egyptian Arabic
     keyboard.row('🙌🏻 الإحالات', '🎁 مكافآت', '💸 السحب')
-    keyboard.row('⚙️ إعداد المحفظة')
-
-    if user_id == OWNER_ID:  # Show the task button only for the admin
-        keyboard.row('📝 وضع مهام')  # زر وضع المهام للمشرفين
-        keyboard.row('📊 إحصائيات')  # زر إحصائيات للمشرفين
-
+    keyboard.row('⚙️ إعداد المحفظة')  # Removed Statistics button for regular users
+    if user_id == OWNER_ID:  # Show statistics only for the admin
+        keyboard.row('📊 إحصائيات')
     bot.send_message(user_id, "*🏡 الرئيسية*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -40,20 +37,7 @@ def start(message):
     try:
         data = json.load(open('users.json', 'r'))
 
-        # تأكد من أن جميع المفاتيح موجودة في البيانات
-        if 'tasks_completed' not in data:
-            data['tasks_completed'] = {}
-        if 'referred' not in data:
-            data['referred'] = {}
-        if 'referby' not in data:
-            data['referby'] = {}
-        if 'checkin' not in data:
-            data['checkin'] = {}
-        if 'balance' not in data:
-            data['balance'] = {}
-        if 'wallet' not in data:
-            data['wallet'] = {}
-
+        # Initialize user data if not present
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
             data['total'] += 1
@@ -65,6 +49,10 @@ def start(message):
             data['balance'][user_id] = 0
         if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
+        if 'tasks_completed' not in data:  # Ensure tasks_completed exists
+            data['tasks_completed'] = {}
+        if user_id not in data['tasks_completed']:
+            data['tasks_completed'][user_id] = 0
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -154,11 +142,6 @@ def send_text(message):
             bot.send_message(message.chat.id, "يرجى إدخال عنوان محفظتك:")
             bot.register_next_step_handler(message, set_wallet)
 
-        elif message.text == '📝 وضع مهام':
-            if user_id == str(OWNER_ID):  # التأكد من أن المستخدم هو المشرف
-                bot.send_message(message.chat.id, "يرجى إدخال تفاصيل المهمة:")
-                bot.register_next_step_handler(message, add_task)
-
         elif message.text == '📊 إحصائيات':
             if user_id == str(OWNER_ID):
                 total_users = data['total']
@@ -166,28 +149,23 @@ def send_text(message):
                 stat_msg = f"🧑‍🤝‍🧑 إجمالي المستخدمين: {total_users}\n💰 إجمالي الرصيد: {total_balance} نقاط"
                 bot.send_message(user_id, stat_msg)
             else:
-                bot.send_message(user_id, "ليس لديك إذن لعرض هذه الإحصائيات.")
+                bot.send_message(user_id, "ليس لديك إذن للوصول إلى الإحصائيات!")
+
+        menu(message.chat.id)
 
     except Exception as e:
-        bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
+        bot.send_message(message.chat.id, "هذا الأمر به خطأ، يرجى الانتظار حتى يتم إصلاحه من قبل المسؤول.")
         bot.send_message(OWNER_ID, "خطأ في البوت: " + str(e))
 
 def set_wallet(message):
     user_id = str(message.chat.id)
-    wallet_address = message.text
+    wallet_address = message.text.strip()
+
+    # تحديث عنوان المحفظة في البيانات
     data = json.load(open('users.json', 'r'))
     data['wallet'][user_id] = wallet_address
-    json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, f"تم حفظ عنوان محفظتك: {wallet_address}")
 
-def add_task(message):
-    user_id = str(message.chat.id)
-    task_details = message.text
-    data = json.load(open('users.json', 'r'))
-    if 'tasks' not in data:
-        data['tasks'] = []
-    data['tasks'].append({'user_id': user_id, 'task': task_details})
     json.dump(data, open('users.json', 'w'))
-    bot.send_message(user_id, f"تم إضافة المهمة: {task_details}")
+    bot.send_message(user_id, f"تم تحديث عنوان محفظتك إلى: {wallet_address}")
 
-bot.polling(none_stop=True)
+bot.polling()
