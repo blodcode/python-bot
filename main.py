@@ -6,7 +6,7 @@ import telebot
 TOKEN = "TON"
 BOT_TOKEN = "8148048276:AAG7Bw7OHeru80X_Fa_x-vHiI61WaxrX4jM"
 PAYMENT_CHANNEL = "@tastttast"
-OWNER_ID = 6932047318
+OWNER_ID = "6932047318"  # جعل المعرف كنص
 CHANNELS = ["@tastttast"]
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/c/YourChannelName"
 Daily_bonus = 2
@@ -140,7 +140,7 @@ def send_text(message):
             bot.register_next_step_handler(message, set_wallet)
 
         elif message.text == '📊 إحصائيات المشرفين':
-            if user_id == str(OWNER_ID):
+            if user_id == OWNER_ID:
                 total_users = data['total']
                 total_balance = sum(data['balance'].values())
                 stat_msg = f"👥 إجمالي المستخدمين: {total_users}\n💰 إجمالي الرصيد: {total_balance} نقاط"
