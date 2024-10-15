@@ -42,6 +42,7 @@ def start(message):
         except FileNotFoundError:
             data = {'referred': {}, 'referby': {}, 'checkin': {}, 'balance': {}, 'wallet': {}, 'tasks_completed': {}, 'total': 0}
 
+        # التأكد من وجود المفاتيح المطلوبة
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
         if user_id not in data['referby']:
@@ -103,6 +104,10 @@ def send_text(message):
     user_id = str(message.chat.id)
     try:
         data = json.load(open('users.json', 'r'))
+
+        # التأكد من وجود المفاتيح المطلوبة
+        if user_id not in data['balance']:
+            data['balance'][user_id] = 0
 
         if message.text == '📊 احصائياتي':
             accmsg = '*👤 المستخدم : {}\n\n💼 المحفظة : *`{}`*\n\n💸 الرصيد : *`{}`* نقاط*'
