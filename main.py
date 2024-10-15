@@ -1,6 +1,7 @@
 import time
 import json
 import telebot
+import traceback
 
 # TOKEN DETAILS
 TOKEN = "TON"
@@ -36,13 +37,11 @@ def menu(user_id):
 def start(message):
     user_id = str(message.chat.id)
     try:
-        # فتح ملف المستخدمين أو إنشاء ملف جديد إذا لم يكن موجودًا
         try:
             data = json.load(open('users.json', 'r'))
         except FileNotFoundError:
             data = {'referred': {}, 'referby': {}, 'checkin': {}, 'balance': {}, 'wallet': {}, 'tasks_completed': {}, 'total': 0}
-        
-        # تأكد من أن المستخدم الجديد لديه كافة الحقول المطلوبة
+
         if user_id not in data['referred']:
             data['referred'][user_id] = 0
         if user_id not in data['referby']:
@@ -55,12 +54,10 @@ def start(message):
             data['wallet'][user_id] = "none"
         if user_id not in data['tasks_completed']:
             data['tasks_completed'][user_id] = 0
-        
-        # زيادة عدد المستخدمين إذا كان المستخدم جديدًا
+
         if user_id not in data['referred']:
             data['total'] += 1
-        
-        # حفظ التعديلات في الملف
+
         json.dump(data, open('users.json', 'w'))
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -72,8 +69,9 @@ def start(message):
         bot.send_message(user_id, msg_start, parse_mode="Markdown", reply_markup=markup)
 
     except Exception as e:
+        error_message = f"حدث خطأ في البوت: {str(e)}\n\nتفاصيل الخطأ:\n{traceback.format_exc()}"
+        bot.send_message(OWNER_ID, error_message)
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
@@ -96,8 +94,9 @@ def query_handler(call):
                 msg_start += f"➡️ اشترك في قناتنا على اليوتيوب:\n{YOUTUBE_CHANNEL_URL}\n"
                 bot.send_message(user_id, msg_start, parse_mode="Markdown", reply_markup=markup)
     except Exception as e:
-        bot.send_message(user_id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
+        error_message = f"حدث خطأ في البوت: {str(e)}\n\nتفاصيل الخطأ:\n{traceback.format_exc()}"
+        bot.send_message(OWNER_ID, error_message)
+        bot.send_message(call.message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
@@ -155,8 +154,9 @@ def send_text(message):
         menu(message.chat.id)
 
     except Exception as e:
+        error_message = f"حدث خطأ في البوت: {str(e)}\n\nتفاصيل الخطأ:\n{traceback.format_exc()}"
+        bot.send_message(OWNER_ID, error_message)
         bot.send_message(message.chat.id, "حدث خطأ، يرجى الانتظار حتى يتم إصلاحه.")
-        bot.send_message(OWNER_ID, f"خطأ في البوت: {str(e)}")
 
 def set_wallet(message):
     user_id = str(message.chat.id)
