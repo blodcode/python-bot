@@ -54,6 +54,7 @@ def start(message):
         if user_id not in data['wallet']:
             data['wallet'][user_id] = "none"
         if user_id not in data['tasks_completed']:
+            data['tasks_completed'] = {}  # التأكد من وجود tasks_completed
             data['tasks_completed'][user_id] = 0
 
         if user_id not in data['referred']:
